@@ -24,11 +24,13 @@ export default class SimpleImage extends Component{
         return(
         <View style={styles.container}>
 {/*            <View style={[styles.circle]} />*/}
-             <Image  style={styles.image} resizeMode= 'cover' resizeMethod='scale'
-                       source= {{ uri:'https://mountainace.blob.core.windows.net/maps/BeaverCreek 7mb.jpg'}}/>
-   {/*         <ImageBackground  style={styles.image}
-                    source= {{ uri:'https://mountainace.blob.core.windows.net/maps/DeerValley.png'}}/>*/}
+            <Image  style={styles.image} resizeMode= 'cover' resizeMethod='scale'
+                       source= {{ uri:'https://mountainace.blob.core.windows.net/maps/deervaley7mb.jpg'}}/>
+      {/*  <ImageBackground  style={styles.image}
+                    source= {{ uri:'https://mountainace.blob.core.windows.net/maps/deervaley7mb.jpg'}}>
 
+        </ImageBackground>*/}
+            <View style={[styles.circle]} />
         </View>
         )
     }
@@ -43,14 +45,18 @@ const styles = StyleSheet.create({
     },
 
     circle: {
+        position:'absolute',
+        top:500,
+        left:30,
         width: 30,
         height: 30,
-        backgroundColor: "#c00000",
-        borderRadius: 20
+        backgroundColor: "red",
+        borderRadius: 20,
+        zIndex:2000
     },
     image: {
         position:'absolute',
-        top: -1400,
+        top: -100,
         left: -800,
         width: 3586,
         height: 2601,
