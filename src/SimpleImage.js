@@ -24,8 +24,8 @@ export default class SimpleImage extends Component{
         return(
         <View style={styles.container}>
 {/*            <View style={[styles.circle]} />*/}
-          {/*   <Image  style={styles.image} resizeMode= 'cover' resizeMethod='scale'
-                       source= {{ uri:'https://mountainace.blob.core.windows.net/maps/DeerValley.png'}}/>*/}
+             <Image  style={styles.image} resizeMode= 'cover' resizeMethod='scale'
+                       source= {{ uri:'https://mountainace.blob.core.windows.net/maps/BeaverCreek 7mb.jpg'}}/>
    {/*         <ImageBackground  style={styles.image}
                     source= {{ uri:'https://mountainace.blob.core.windows.net/maps/DeerValley.png'}}/>*/}
 
@@ -37,7 +37,9 @@ export default class SimpleImage extends Component{
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        flexDirection: 'column'
+        flexDirection: 'column',
+        width:"100%",
+        height:"100%"
     },
 
     circle: {
@@ -47,8 +49,11 @@ const styles = StyleSheet.create({
         borderRadius: 20
     },
     image: {
-        width: 3150,
-        height: 2004,
+        position:'absolute',
+        top: -1400,
+        left: -800,
+        width: 3586,
+        height: 2601,
        // flex:1
     }
 
