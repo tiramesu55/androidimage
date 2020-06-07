@@ -1,124 +1,126 @@
-import React, {Component} from 'react'
-import {  View, Dimensions, StyleSheet,Image, ImageBackground, Animated  } from 'react-native'
+import React, {Component} from 'react';
+import { View, Dimensions, StyleSheet,Image, ImageBackground, Animated  } from 'react-native';
 
-import  {PanGestureHandler, PinchGestureHandler, State} from 'react-native-gesture-handler'
-const { width, height,  } = Dimensions.get('window')
-//It produces slow animation.  Not acceptable.  Need to use Animated somehow
+import { PanGestureHandler, PinchGestureHandler, State } from 'react-native-gesture-handler';
+
+const { width, height } = Dimensions.get('window');
+
 export default class SimpleImage extends Component{
-    x=0;
-    y=0;
-    k=1;
-    circleX = 100;
-    circleY = 500;
-    panRef = React.createRef();
-    pinchRef = React.createRef();
-    translateX = new Animated.Value(0)
-    translateY = new Animated.Value(0)
-
-    pinchScale  = new Animated.Value(1);
-    baseScale = new Animated.Value(1);
-    scale = Animated.multiply(this.baseScale, this.pinchScale);
-
-    onPanStateChange = event => {
-        if (event.nativeEvent.state === State.ACTIVE) {
-            this.x += event.nativeEvent.translationX;
-            this.y += event.nativeEvent.translationY;
-            this.translateX.setOffset(this.x);
-            this.translateX.setValue(0)
-            this.translateY.setOffset(this.y);
-            this.translateY.setValue(0)
-        //    console.log(this.x)
-        }
-
-    };
-    onPinchStateChange = event => {
-        if (event.nativeEvent.oldState === State.ACTIVE) {
-           this.k *= event.nativeEvent.scale
-           this.baseScale.setValue(this.k);
-           this.pinchScale.setValue(1);
-          //  console.log(this.k)
-        }
-        console.log('pinch',event.nativeEvent.state )
-    }
-    handleGesture = Animated.event(
-        [{nativeEvent: {translationX: this.translateX,translationY:this.translateY}}],
-        { useNativeDriver: true,
-           // listener: (event, gestureState) => console.log(event, gestureState)
-        });
-
-    handleZoom = Animated.event(
-        [{nativeEvent: {scale: this.pinchScale}}],
-        { useNativeDriver: true,
-          //  listener: (event, gestureState) => console.log(event, gestureState)
-        });
-
     constructor(props) {
         super(props);
     }
-   /* handleGesture = e => {
-        const {nativeEvent} = e;
-        this.translateX = nativeEvent.translationX;
-        this.translateY = nativeEvent.translationY;
-        console.log(nativeEvent.translationX,nativeEvent.translationY );
-    }*/
-    render () {
 
-        let
-         circleTransformStyle = {
+    _lastScale = 1;
+    _baseScale = new Animated.Value(1);
+    _pinchScale = new Animated.Value(1);
+    _scale = Animated.multiply(this._baseScale, this._pinchScale);
+
+    _animationValueXY = new Animated.ValueXY({ x: 0, y: 0 });
+    _lastOffsetX = 0;
+    _lastOffsetY = 0;
+
+    _onHandleGesture = event => {
+        const x = this.toEqualPanSpeed(event.nativeEvent.translationX)
+        const y = this.toEqualPanSpeed(event.nativeEvent.translationY)
+
+        this._animationValueXY.setValue({
+            x: x + this._lastOffsetX,
+            y: y + this._lastOffsetY
+        })
+    }
+
+    _onPinchGestureEvent = Animated.event(
+        [{ nativeEvent: { scale: this._pinchScale } }],
+        { useNativeDriver: true }
+    );
+
+    _onHandleGestureState = event => {
+        if (event.nativeEvent.state === State.END) {
+            const x = this.toEqualPanSpeed(event.nativeEvent.translationX);
+            const y = this.toEqualPanSpeed(event.nativeEvent.translationY);
+
+            this._lastOffsetX += x;
+            this._lastOffsetY += y;
+        }
+    }
+
+    _onPinchHandlerStateChange = event => {
+        if (event.nativeEvent.oldState === State.ACTIVE) {
+            this._lastScale *= event.nativeEvent.scale;
+            this._baseScale.setValue(this._lastScale);
+            this._pinchScale.setValue(1);
+        }
+    };
+
+    toEqualPanSpeed = (x) => {
+        return x / this._scale.__getValue();
+    }
+
+    render () {
+        const { container } = styles;
+        const pinchRef = React.createRef();
+        const panRef = React.createRef();
+
+        const viewTransformStyle = {
             transform:[
                 {
-                    translateY : this.translateY
+                    // need scale multiplying for zooming from/to display center
+                    translateY : Animated.multiply(this._animationValueXY.y, this._scale)
                 },
                 {
-                    translateX : this.translateX
+                    // same for x
+                    translateX : Animated.multiply(this._animationValueXY.x, this._scale)
                 },
                 {
-                    scale: this.scale
+                    scale: this._scale
+                },
+                {
+                    perspective: 200
                 }
             ]
         }
 
         return(
-        <View style={styles.container}>
-            <PinchGestureHandler onGestureEvent={this.handleZoom}
-                                 onHandlerStateChange={this.onPinchStateChange}
-            >
-             <Animated.View style={{flex:1}} collapsable={false}>
-                 <PanGestureHandler
-                     onGestureEvent={this.handleGesture}
-                     onHandlerStateChange={this.onPanStateChange}
-                     minDist={30}
-                     maxPointers={1}
-                 >
+             <PanGestureHandler
+                 ref={panRef}
+                 simultaneousHandlers={pinchRef}
+                 onGestureEvent={this._onHandleGesture}
+                 onHandlerStateChange={this._onHandleGestureState}
+                 minDist={30}
+                 maxPointers={1}
+             >
+                 <Animated.View style={container} collapsable={false}>
+                     <PinchGestureHandler
+                         ref={panRef}
+                         simultaneousHandlers={panRef}
+                         onGestureEvent={this._onPinchGestureEvent}
+                         onHandlerStateChange={this._onPinchHandlerStateChange}
+                     >
+                         <Animated.View style={container} collapsable={false}>
+                             <Animated.View style={[styles.animatedView, viewTransformStyle]} collapsable={false} >
 
-                <Animated.View style={[styles.animatedView,circleTransformStyle] } collapsable={false} >
-                    <Image  style={[styles.image]} resizeMode= 'cover' resizeMethod='scale'
-                       source= {{ uri:'https://mountainace.blob.core.windows.net/maps/deervaley7mb.jpg'}}/>
+                                 <Image
+                                     style={[styles.image]}
+                                     resizeMode='cover'
+                                     resizeMethod='scale'
+                                     source= {{ uri:'https://mountainace.blob.core.windows.net/maps/deervaley7mb.jpg'}}
+                                 />
 
-      {/*  <ImageBackground  style={styles.image}
-                    source= {{ uri:'https://mountainace.blob.core.windows.net/maps/deervaley7mb.jpg'}}>
+                                 <View style={styles.circle} />
 
-        </ImageBackground>*/}
-
-                    <View style={styles.circle} />
-                </Animated.View>
-                 </PanGestureHandler>
-
-           </Animated.View>
-            </PinchGestureHandler>
-
-        </View>
+                             </Animated.View>
+                         </Animated.View>
+                     </PinchGestureHandler>
+                 </Animated.View>
+             </PanGestureHandler>
         )
     }
 }
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
-        flexDirection: 'column',
-
+        flex: 1
     },
-
     circle: {
         position:'absolute',
         top:500,
@@ -134,14 +136,11 @@ const styles = StyleSheet.create({
         top: -100,
         left: -800,
         width: 3586,
-        height: 2601,
-       // flex:1
+        height: 2601
     },
     animatedView:{
         flex:1,
         width:"100%",
         height:"100%"
     }
-
-
 })
